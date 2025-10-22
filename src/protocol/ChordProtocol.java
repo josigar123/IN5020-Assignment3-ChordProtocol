@@ -2,7 +2,9 @@ package protocol;
 
 
 import crypto.ConsistentHashing;
+import p2p.FingerTableEntry;
 import p2p.NetworkInterface;
+import p2p.NodeInterface;
 
 
 import java.util.*;
@@ -107,13 +109,55 @@ public class ChordProtocol implements Protocol{
      *     3) node - first node in the ring that is responsible for indexes in the interval
      */
     public void buildFingerTable() {
-        /*
-        implement this logic
-         */
 
+        // Get all nodes in the network
+        LinkedHashMap<String, NodeInterface> topology = network.getTopology();
+
+        // For each node, build its finger table
+        for(Map.Entry<String, NodeInterface> entry : topology.entrySet()){
+
+            // This nodes finger table
+            ArrayList<FingerTableEntry> fingerTable = new  ArrayList<>();
+            String nodeName = entry.getKey();
+            NodeInterface node = entry.getValue();
+
+            // Build each entry for the table of the current node
+            for(int i = 1; i <= m; i++){
+
+                // Get the start for this entry
+                int start = (int) ((node.getId() + Math.pow(2, i - 1)) % Math.pow(2, m));
+
+                // End of the interval
+                int end = (int) ((node.getId() + Math.pow(2, i)) % Math.pow(2, m));
+
+                // Get the successor on the interval
+                NodeInterface successor = findSuccessor(topology.values(), start);
+
+                // Add the entry to the table with the appropriate fields
+                fingerTable.add(new FingerTableEntry(start, end, successor));
+            }
+
+            // Set the current nodes rounting table
+            node.setRoutingTable(fingerTable);
+        }
     }
 
+    // Method is needed to find the appropriate predecessor given a start, search the topology
+    private NodeInterface findSuccessor(Collection<NodeInterface> topology, int target){
 
+        List<NodeInterface> sortedNodes = new ArrayList<>(topology);
+        sortedNodes.sort(Comparator.comparingInt(NodeInterface::getId));
+
+        // Find the node with appropriate id
+        for(NodeInterface node : sortedNodes){
+            if(node.getId() >= target){
+                return node;
+            }
+        }
+
+        // Wrap-around case, no nodes with suitable ID found, we have gone through the ring
+        return sortedNodes.get(0);
+    }
 
     /**
      * This method performs the lookup operation.
