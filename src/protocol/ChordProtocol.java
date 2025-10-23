@@ -169,9 +169,81 @@ public class ChordProtocol implements Protocol{
      * @return names of nodes that have been searched and the final node that contains the key
      */
     public LookUpResponse lookUp(int keyIndex){
-        /*
-        implement this logic
-         */
+
+        // choose fixed start node (first in topology)
+        NodeInterface curr = this.network.getTopology().entrySet().iterator().next().getValue();
+
+        LinkedHashSet<String> route = new LinkedHashSet<>();
+        // prevents infinite looping if something goes wrong
+        HashSet<String> visited = new HashSet<>();
+
+        while (curr != null && !visited.contains(curr.getName())) {
+            // mark this node as visited and add to the lookup route
+            visited.add(curr.getName());
+            route.add(curr.getName());
+
+        // check if this node already stores the key (then lookup is done)
+        Object dataObj = curr.getData();
+        if (dataObj instanceof LinkedHashSet<?>) {
+            LinkedHashSet<?> data = (LinkedHashSet<?>) dataObj;
+            if (data.contains(keyIndex)) {
+                return new LookUpResponse(route, curr.getId(), curr.getName());
+            }
+        }
+
+        // Save ring-successor for fallback use
+        NodeInterface successor = curr.getSuccessor();
+
+        // Try to locate correct next-hop using the finger table
+        NodeInterface next = null;
+        Object rt = curr.getRoutingTable();
+
+        if (rt instanceof List<?>) {
+            List<?> list = (List<?>) rt;
+
+                // Traverse fingers from largest interval (end) to smallest (start)
+                for (int i = list.size() - 1; i >= 0; i--) {
+                    Object o = list.get(i);
+                    if (!(o instanceof FingerTableEntry)) continue;
+                    FingerTableEntry fe = (FingerTableEntry) o;
+
+                    // Check if keyIndex lies within this finger's [start, end) interval (with wrap)
+                    boolean inInterval;
+                    if (fe.start < fe.end) {
+                        inInterval = (keyIndex >= fe.start && keyIndex < fe.end);
+                    } else if (fe.start > fe.end) {
+                        inInterval = (keyIndex >= fe.start) || (keyIndex < fe.end);
+                    } else {
+                        inInterval = true;
+                    }
+
+                    // Use the successor of that finger interval as next hop
+                    if (inInterval) {
+                        next = fe.successor;
+                        break;
+                    }
+                }
+            }
+
+            // If finger table gave no match, fall back to the immediate ring successor
+            if (next == null) {
+                next = successor;
+            }
+
+            // If no movement is possible, abort
+            if (next == null) break;
+
+            // Move to the next node and continue lookup
+            curr = next;
+        }
+
+        // Safety fallback: resolve responsible node using ring logic if lookup loop exits unexpectedly
+        NodeInterface responsible = findSuccessor(this.network.getTopology().values(), keyIndex);
+        if (responsible != null) {
+            route.add(responsible.getName());
+            return new LookUpResponse(route, responsible.getId(), responsible.getName());
+        }
+
         return null;
     }
 
