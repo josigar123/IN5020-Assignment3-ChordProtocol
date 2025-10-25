@@ -86,9 +86,27 @@ public class ChordProtocol implements Protocol{
      */
     public void buildOverlayNetwork(){
 
-        /*
-        implement this logic
-         */
+        LinkedHashMap<String, NodeInterface> nodes =  network.getTopology();
+        TreeMap<Integer, String> indexMapping = new TreeMap<>();
+
+        for(String name: nodes.keySet()){
+            Integer index = ch.hash(name);
+            indexMapping.put(index, name);
+        }
+       
+        List<String> sortedNodes = new ArrayList<>(indexMapping.values());
+        int n = sortedNodes.size();
+
+        for (int i = 0; i < n; i++) {
+            String currentName = sortedNodes.get(i);
+            String nextName = sortedNodes.get((i + 1) % n);
+
+            NodeInterface currentNode = nodes.get(currentName);
+            NodeInterface nextNode = nodes.get(nextName);
+
+            currentNode.addNeighbor(nextName, nextNode);
+            nextNode.addNeighbor(currentName, currentNode);
+        }
 
     }
 
