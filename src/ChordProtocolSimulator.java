@@ -326,12 +326,46 @@ public class ChordProtocolSimulator {
         printNetwork();
 
         // tests the lookup operation
-        //testLookUp();
+        testLookUp();
 
-        /*
-        implement this logic
-         */
-        // Look up all the key, print out as required in the Assignment Description
+        System.out.println("\n =----Starting Lookup Tests----=");
+        int totalHops = 0;
+        int count = 0;
+
+        for (Map.Entry<String, Integer> entry : keyIndexes.entrySet()) {
+            String keyName = entry.getKey();
+            int keyIndex = entry.getValue();
+
+            //pefrom lookup 
+            LookUpResponse response = protocol.lookUp(keyIndex);
+            if (response == null) {
+                System.out.println(keyName + ":" + keyIndex + " lookup failed (no response)");
+                continue;
+            }
+
+        int hopCount = response.peers_looked_up.size();
+        totalHops += hopCount;
+        count++;
+
+        // build the route string
+        StringBuilder routeStr = new StringBuilder();
+        for (String nodeName : response.peers_looked_up) {
+            routeStr.append(nodeName).append(" ");
+        }
+
+        // print result in required assignment format
+        System.out.println(
+            keyName + ":" + keyIndex + " " +
+            response.node_name + ":" + response.node_index +
+            " hop count:" + hopCount +
+            " route:" + routeStr.toString().trim()
+        );
+    }
+
+        double avgHop = (count == 0) ? 0 : (double) totalHops / count;
+        System.out.println("\nAverage hop count = " + avgHop);
+        System.out.println("= ----Lookup Tests Completed---- =");
+
     }
 
 }
