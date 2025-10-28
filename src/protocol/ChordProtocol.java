@@ -91,6 +91,7 @@ public class ChordProtocol implements Protocol{
 
         for(String name: nodes.keySet()){
             Integer index = ch.hash(name);
+            nodes.get(name).setId(index);
             indexMapping.put(index, name);
         }
        
@@ -105,14 +106,8 @@ public class ChordProtocol implements Protocol{
             NodeInterface nextNode = nodes.get(nextName);
 
             currentNode.addNeighbor(nextName, nextNode);
-            nextNode.addNeighbor(currentName, currentNode);
         }
-
     }
-
-
-
-
 
 
     /**
@@ -136,7 +131,6 @@ public class ChordProtocol implements Protocol{
 
             // This nodes finger table
             ArrayList<FingerTableEntry> fingerTable = new  ArrayList<>();
-            String nodeName = entry.getKey();
             NodeInterface node = entry.getValue();
 
             // Build each entry for the table of the current node
