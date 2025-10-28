@@ -11,4 +11,9 @@ public class FingerTableEntry {
         this.end = end;
         this.successor = successor;
     }
+
+    @Override
+    public String toString() {
+        return "[Start: " + start + ", Interval: (" + start + ", " + end + "), Successor: " + successor.getName() + "]";
+    }
 }
