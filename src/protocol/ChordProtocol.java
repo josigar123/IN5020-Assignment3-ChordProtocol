@@ -87,8 +87,10 @@ public class ChordProtocol implements Protocol{
     public void buildOverlayNetwork(){
 
         LinkedHashMap<String, NodeInterface> nodes =  network.getTopology();
+        // Use a treemap so adding sorts automatically
         TreeMap<Integer, String> indexMapping = new TreeMap<>();
 
+        // Fetch index with the hashing function for every node
         for(String name: nodes.keySet()){
             Integer index = ch.hash(name);
             nodes.get(name).setId(index);
@@ -98,6 +100,7 @@ public class ChordProtocol implements Protocol{
         List<String> sortedNodes = new ArrayList<>(indexMapping.values());
         int n = sortedNodes.size();
 
+        // Add neighbours following sorted order
         for (int i = 0; i < n; i++) {
             String currentName = sortedNodes.get(i);
             String nextName = sortedNodes.get((i + 1) % n);
