@@ -157,11 +157,14 @@ public class ChordProtocol implements Protocol{
     // Method is needed to find the appropriate predecessor given a start, search the topology
     private NodeInterface findSuccessor(Collection<NodeInterface> topology, int target){
 
+        // crete a list of the nodes in the network, and sort them based on ID
         List<NodeInterface> sortedNodes = new ArrayList<>(topology);
         sortedNodes.sort(Comparator.comparingInt(NodeInterface::getId));
 
         // Find the node with appropriate id
         for(NodeInterface node : sortedNodes){
+            // Want to find the first node with an id greater or equal to target
+            // If it doesnt exist we wrap around and return the first of the sorted nodes (see last line of method)
             if(node.getId() >= target){
                 return node;
             }
